@@ -18,9 +18,8 @@ namespace SingleResponsibilityPrinciple.Tests
             return count;
         }
 
-
         [TestMethod()]
-        public void TestSize3()
+        public async Task TestSize3()
         {
             //Arrange
             ILogger logger = new ConsoleLogger();
@@ -29,10 +28,9 @@ namespace SingleResponsibilityPrinciple.Tests
             ITradeDataProvider tradeProvider = new RestfulTradeDataProvider(restfulURL, logger);
 
             //Act
-            IEnumerable<string> trades = tradeProvider.GetTradeData();
+            IEnumerable<string> trades = await tradeProvider.GetTradeData();  // Await the async method
 
             //Assert
-
             Assert.AreEqual(countStrings(trades), 3);
         }
     }

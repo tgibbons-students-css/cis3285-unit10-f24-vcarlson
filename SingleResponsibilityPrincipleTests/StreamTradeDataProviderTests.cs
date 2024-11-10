@@ -1,14 +1,16 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SingleResponsibilityPrinciple.Contracts;
 using SingleResponsibilityPrinciple;
+using System.IO;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SingleResponsibilityPrinciple.Tests
 {
     [TestClass()]
     public class StreamTradeDataProviderTests
     {
-
         private int countStrings(IEnumerable<string> collectionOfStrings)
         {
             // count the trades
@@ -20,41 +22,50 @@ namespace SingleResponsibilityPrinciple.Tests
             return count;
         }
 
-
         [TestMethod()]
-        public void TestSize1()
+        public async Task TestSize1()  // Marked as async
         {
-            //Arrange
+            // Arrange
             ILogger logger = new ConsoleLogger();
-            String fileName = "SingleResponsibilityPrincipleTests.trades_1good.txt";
+            string fileName = "SingleResponsibilityPrinciple.Tests.trades_1good.txt";  // Adjust resource name if necessary
             Stream tradeStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(fileName);
+
+            // Check if stream is null
+            if (tradeStream == null)
+            {
+                throw new FileNotFoundException($"Resource {fileName} not found.");
+            }
 
             ITradeDataProvider tradeProvider = new StreamTradeDataProvider(tradeStream, logger);
 
-            //Act
-            IEnumerable<string> trades = tradeProvider.GetTradeData();
+            // Act
+            IEnumerable<string> trades = await tradeProvider.GetTradeData();  // Await the task
 
-            //Assert
- 
+            // Assert
             Assert.AreEqual(countStrings(trades), 1);
         }
+
         [TestMethod()]
-        public void TestSize5()
+        public async Task TestSize5()  // Marked as async
         {
-            //Arrange
+            // Arrange
             ILogger logger = new ConsoleLogger();
-            String fileName = "SingleResponsibilityPrincipleTests.trades_5good.txt";
+            string fileName = "SingleResponsibilityPrinciple.Tests.trades_5good.txt";  // Adjust resource name if necessary
             Stream tradeStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(fileName);
+
+            // Check if stream is null
+            if (tradeStream == null)
+            {
+                throw new FileNotFoundException($"Resource {fileName} not found.");
+            }
 
             ITradeDataProvider tradeProvider = new StreamTradeDataProvider(tradeStream, logger);
 
-            //Act
-            IEnumerable<string> trades = tradeProvider.GetTradeData();
+            // Act
+            IEnumerable<string> trades = await tradeProvider.GetTradeData();  // Await the task
 
-            //Assert
-
+            // Assert
             Assert.AreEqual(countStrings(trades), 5);
         }
-
     }
 }

@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
-
-using SingleResponsibilityPrinciple.Contracts;
+﻿using SingleResponsibilityPrinciple.Contracts;
+using System.Collections.Generic;
 
 namespace SingleResponsibilityPrinciple
 {
@@ -15,7 +14,7 @@ namespace SingleResponsibilityPrinciple
             this.tradeMapper = tradeMapper;
         }
 
-        IEnumerable<Contracts.TradeRecord> ITradeParser.Parse(IEnumerable<string> tradeData)
+        public IEnumerable<TradeRecord> Parse(IEnumerable<string> tradeData) // Ensure this matches the interface
         {
             var trades = new List<TradeRecord>();
             var lineCount = 1;
@@ -37,6 +36,5 @@ namespace SingleResponsibilityPrinciple
 
             return trades;
         }
-
     }
 }

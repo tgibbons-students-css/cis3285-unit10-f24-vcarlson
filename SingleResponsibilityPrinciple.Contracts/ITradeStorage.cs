@@ -1,9 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using SingleResponsibilityPrinciple.Contracts;
 
-namespace SingleResponsibilityPrinciple.Contracts
+public interface ITradeStorage
 {
-    public interface ITradeStorage
-    {
-        void Persist(IEnumerable<TradeRecord> trades);
-    }
+    Task Persist(IEnumerable<TradeRecord> trades);  // Asynchronous method
 }

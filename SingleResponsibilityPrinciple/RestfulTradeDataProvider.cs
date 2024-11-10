@@ -1,18 +1,15 @@
 ﻿using SingleResponsibilityPrinciple.Contracts;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace SingleResponsibilityPrinciple
 {
     public class RestfulTradeDataProvider : ITradeDataProvider
     {
-        string url;
-        ILogger logger;
-        HttpClient client = new HttpClient();
+        private readonly string url;
+        private readonly ILogger logger;
+        private readonly HttpClient client = new HttpClient();
 
         public RestfulTradeDataProvider(string url, ILogger logger)
         {
@@ -20,29 +17,24 @@ namespace SingleResponsibilityPrinciple
             this.logger = logger;
         }
 
-        async Task<List<string>> GetTradeAsync()
+        public async Task<IEnumerable<string>> GetTradeData()
         {
             logger.LogInfo("Connecting to the Restful server using HTTP");
-            List<string> tradesString = null;
+            var tradeData = new List<string>();
 
             HttpResponseMessage response = await client.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
-                // Read the content as a string and deserialize it into a List<string>
                 string content = await response.Content.ReadAsStringAsync();
-                tradesString = JsonSerializer.Deserialize<List<string>>(content);
-                logger.LogInfo("Received trade strings of length = " + tradesString.Count);
+                tradeData.AddRange(content.Split("\n"));
+                logger.LogInfo($"Received trade strings of length = {tradeData.Count}");
             }
-            return tradesString;
-        }
+            else
+            {
+                logger.LogWarning($"Failed to retrieve data. Status code: {response.StatusCode}");
+            }
 
-        public IEnumerable<string> GetTradeData()
-        {
-            Task<List<string>> task = Task.Run(() => GetTradeAsync());
-            task.Wait();
-
-            List<string> tradeList = task.Result;
-            return tradeList;
+            return tradeData;
         }
     }
 }

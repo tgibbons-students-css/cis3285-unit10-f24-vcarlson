@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SingleResponsibilityPrinciple.Contracts
 {
     public interface ITradeDataProvider
     {
-        IEnumerable<string> GetTradeData();
+        Task<IEnumerable<string>> GetTradeData(); // Ensure it returns Task
     }
 }
+

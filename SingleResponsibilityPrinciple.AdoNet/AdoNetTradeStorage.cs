@@ -1,5 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using SingleResponsibilityPrinciple.Contracts;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SingleResponsibilityPrinciple.AdoNet
 {
@@ -12,32 +14,28 @@ namespace SingleResponsibilityPrinciple.AdoNet
             this.logger = logger;
         }
 
-        public void Persist(IEnumerable<TradeRecord> trades)
+        public async Task Persist(IEnumerable<TradeRecord> trades)
         {
-
-            // Template for connection string from database connection file
-            //    The @ sign allows for back slashes
-            //    Watch for double quotes which must be escaped using "" 
-            //    Watch for extra spaces after C: and avoid paths with - hyphens -
-            string genericConnectString = @"Data Source=(local);Initial Catalog=TradeDatabase;Integrated Security=True;";
-            // The datadirConnectString connection string uses |DataDirectory| 
-            //    and assumes the tradedatabase.mdf file is stored in 
-            //    SingleResponsibilityPrinciple\bin\Debug 
-            string datadirConnectString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\tradedatabase.mdf;Integrated Security=True;Connect Timeout=30;";
-            // This users the Azure connection string
+            // Define connection strings for different environments
             string azureConnectString = @"Server=tcp:cis3285-sql-server.database.windows.net,1433; Initial Catalog = Unit8_TradesDatabase; Persist Security Info=False; User ID=cis3285;Password=Saints4SQL; MultipleActiveResultSets = False; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 60;";
-            string tomConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\tgibbons\Documents\tradedatabase.mdf;Integrated Security=True;Connect Timeout=30";
-            // Change the connection string used to match the one you want
+
+            // Log info about connection attempt
             logger.LogInfo("INFO: Connecting to AZURE cloud database... This may timeout the first time");
+
             using (var connection = new SqlConnection(azureConnectString))
             {
-                connection.Open();
-                using (var transaction = connection.BeginTransaction())
+                await connection.OpenAsync(); // Open connection asynchronously
+
+                // Begin transaction asynchronously
+                using (var transaction = await connection.BeginTransactionAsync())
                 {
+                    // Explicitly cast DbTransaction to SqlTransaction
+                    var sqlTransaction = (SqlTransaction)transaction;
+
                     foreach (var trade in trades)
                     {
                         var command = connection.CreateCommand();
-                        command.Transaction = transaction;
+                        command.Transaction = sqlTransaction; // Assign the explicitly cast transaction
                         command.CommandType = System.Data.CommandType.StoredProcedure;
                         command.CommandText = "dbo.insert_trade";
                         command.Parameters.AddWithValue("@sourceCurrency", trade.SourceCurrency);
@@ -45,15 +43,18 @@ namespace SingleResponsibilityPrinciple.AdoNet
                         command.Parameters.AddWithValue("@lots", trade.Lots);
                         command.Parameters.AddWithValue("@price", trade.Price);
 
-                        command.ExecuteNonQuery();
+                        await command.ExecuteNonQueryAsync(); // Execute asynchronously
                     }
 
-                    transaction.Commit();
+                    await sqlTransaction.CommitAsync(); // Commit transaction asynchronously
                 }
-                connection.Close();
+
+                await connection.CloseAsync(); // Close connection asynchronously
             }
 
-            logger.LogInfo("{0} trades processed", trades.Count());
+            // Log info about how many trades were processed
+            int tradeCount = trades.Count(); // Enumerate trades synchronously and get the count
+            logger.LogInfo("{0} trades processed", tradeCount);
         }
     }
 }
